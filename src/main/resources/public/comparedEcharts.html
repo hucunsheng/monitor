@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8">
+    <title>ECharts</title>
+    <script src="./echarts.js"></script>
+
+    <script type="text/javascript" src="./vue.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="./iview.css">
+    <script type="text/javascript" src="./iview.min.js"></script>
+    <link rel="stylesheet" href="./jquery-ui.css">
+    <script src="./jquery-1.9.1.js"></script>
+    <script src="./jquery-ui.js"></script>
+
+ <!--日期时间控件-->
+
+    <link href="jQuery-Timepicker-Addon/jquery-ui-timepicker-addon.css" type="text/css" />
+    <link href="jQuery-Timepicker-Addon/demos.css" rel="stylesheet" type="text/css" />
+
+    <script src="jQuery-Timepicker-Addon/jquery-ui-timepicker-addon.js" type="text/javascript"></script>
+
+    <!--中文-->
+    <script src="js/jquery.ui.datepicker-zh-CN.js.js" type="text/javascript" charset="gb2312"></script>
+    <script src="js/jquery-ui-timepicker-zh-CN.js" type="text/javascript"></script>
+
+
+</head>
+<body>
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div id="app">
+    type1:<select id="selectMonitor" v-model="couponSelected">
+        <option v-for="option in options" :value="option.MONITOR_CON_PARA_ID">
+            {{ option.PARA_SERVICENAME }}
+        </option>
+    </select>
+    <label style="margin-left: 100px;" for="from">从</label>
+    <input type="text" id="from" name="from">
+    <label for="to">到</label>
+    <input type="text" id="to" name="to">
+
+</div>
+<div id="app2">
+    type2:<select id="selectMonitor2" v-model="couponSelected2">
+        <option v-for="option in options" :value="option.MONITOR_CON_PARA_ID">
+            {{ option.PARA_SERVICENAME }}
+        </option>
+    </select>
+    <label style="margin-left: 100px;" for="from1">从</label>
+    <input type="text" id="from1" name="from1">
+    <label for="to1">到</label>
+    <input type="text" id="to1" name="to1">
+
+</div>
+    <!--<span>Selected: {{ couponSelected }}</span>-->
+
+
+
+            <input type="button" id="query" onclick="init();" style="margin-left: 200px;width:100px;height: 20px;" value="查询">
+<div id="main" style="height:400px"></div>
+<!-- ECharts单文件引入 -->
+
+<script type="text/javascript">
+
+
+</script>
+<script type="text/javascript">
+
+    var app = new Vue({
+        el: '#app',
+        data: {
+            //selected: 'A',
+            options: [
+                { text: '全部监控列表', value: 'A' }
+            ],
+            couponSelected: ''
+        }
+    })
+    var app2 = new Vue({
+        el: '#app2',
+        data: {
+            //selected: 'A',
+            options: [
+                { text: '全部监控列表', value: 'A' }
+            ],
+            couponSelected2: ''
+        }
+    })
+
+
+    $(function() {
+
+
+        $( "#from" ).datetimepicker({
+            defaultDate: "-1w",
+            changeMonth: true,
+            numberOfMonths: 1,
+            dateFormat: 'yy-mm-dd',
+            timeFormat: 'HH:mm:ss',
+//            onClose: function( selectedDate ) {
+//                $( "#to" ).datetimepicker( "option", "minDate", selectedDate );
+//            }
+        });
+
+        $( "#to" ).datetimepicker({
+            defaultDate: "-1w",
+            changeMonth: true,
+            numberOfMonths: 1,
+            dateFormat: 'yy-mm-dd',
+            timeFormat: 'HH:mm:ss',
+//            onClose: function( selectedDate ) {
+//                $( "#from" ).datetimepicker( "option", "maxDate", selectedDate );
+//            }
+        });
+
+        $( "#from1" ).datetimepicker({
+            defaultDate: "-1w",
+            changeMonth: true,
+            numberOfMonths: 1,
+            dateFormat: 'yy-mm-dd',
+            timeFormat: "HH:mm:ss",
+//            onClose: function( selectedDate ) {
+//                $( "#to1" ).datetimepicker( "option", "minDate", selectedDate );
+//            }
+        });
+
+        $( "#to1" ).datetimepicker({
+            defaultDate: "-1w",
+            changeMonth: true,
+            numberOfMonths: 1,
+            dateFormat: 'yy-mm-dd',
+            timeFormat: 'HH:mm:ss',
+//            onClose: function( selectedDate ) {
+//                $( "#from1" ).datetimepicker( "option", "maxDate", selectedDate );
+//            }
+        });
+        $.ajax({
+            url:"/monitor/getMonitors",
+            type:"get",
+            data: {
+                //from: fromval,
+                //to: toval,
+                //pageIndex :1
+            },
+            dataType:"json",
+            success:function(response){
+                var selectList = response.selectList;
+                app.$data.options=selectList;
+                app.$data.couponSelected=selectList[0].MONITOR_CON_PARA_ID;
+                app2.$data.options=selectList;
+                app2.$data.couponSelected2=selectList[0].MONITOR_CON_PARA_ID;
+                init();
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown){
+            },
+            beforeSend:function(XMLHttpRequest){
+            },
+            complete:function(XMLHttpRequest,textStatus){
+            }
+        })
+
+
+
+    });
+
+    function init() {
+        var monitorId1 = app.$data.couponSelected;
+        var monitorId2 = app2.$data.couponSelected2;
+        // 基于准备好的dom，初始化echarts图表
+        var myChart = echarts.init(document.getElementById('main'));
+        $.ajax({
+            url: "/monitor/getEcharts",
+            type: "post",
+            data: {
+                from: $( "#from" ).val(),
+                to: $( "#to" ).val(),
+                monitorId : monitorId1
+            },
+            dataType: "json",
+            cache:false,
+            traditional:true,
+            success: function (response) {
+                $( "#from" ).val(response.from);
+                $( "#to" ).val(response.to);
+                var resName = response.resName;
+                var xAxisList = response.xAxisList;
+                var seriesList = response.seriesList;
+                if(resName==null||resName==""){
+                    $( "#from1" ).val(response.from1);
+                    $( "#to1" ).val(response.to1);
+                    init();
+                }
+                if(resName!=null&&resName!=""){
+                    $.ajax({
+                        url: "/monitor/getEcharts",
+                        type: "post",
+                        data: {
+                            from: $( "#from1" ).val(),
+                            to: $( "#to1" ).val(),
+                            monitorId : monitorId2
+                        },
+                        dataType: "json",
+                        cache:false,
+                        traditional:true,
+                        success: function (response) {
+//                            $( "#from1" ).val(response.from1);
+//                            $( "#to1" ).val(response.to1);
+                            var resName1 = response.resName;
+                            var xAxisList1 = response.xAxisList;
+                            var seriesList1 = response.seriesList;
+                            option = {
+                                title : {
+                                    text: $("#selectMonitor option:selected").text()
+                                },
+                                tooltip : {
+                                    trigger: 'axis'
+                                },
+                                legend: {
+                                    data:[resName,resName1]
+                                },
+                                toolbox: {
+                                    show : true,
+                                    feature : {
+                                        mark : {show: true},
+                                        dataView : {show: true, readOnly: false},
+                                        magicType : {show: true, type: ['line', 'bar']},
+                                        restore : {show: true},
+                                        saveAsImage : {show: true}
+                                    }
+                                },
+                                calculable : true,
+                                xAxis : [
+                                    {
+                                        type : 'category',
+                                        data : xAxisList
+                                    }
+                                ],
+                                yAxis : [
+                                    {
+                                        type : 'value'
+                                    }
+                                ],
+                                series : [
+                                    {
+                                        name:resName,
+                                        type:'bar',
+                                        data:seriesList,
+                                        markPoint : {
+                                            data : [
+                                                {type : 'max', name: '最大值'},
+                                                {type : 'min', name: '最小值'}
+                                            ]
+                                        },
+                                        markLine : {
+                                            data : [
+                                                {type : 'average', name: '平均值'}
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        name:resName1,
+                                        type:'bar',
+                                        data:seriesList1,
+                                        markPoint : {
+//                                            data : [
+//                                                {name : '年最高', value : 182.2, xAxis: 7, yAxis: 183, symbolSize:18},
+//                                                {name : '年最低', value : 2.3, xAxis: 11, yAxis: 3}
+//                                            ]
+                                            data : [
+                                                {type : 'max', name: '最大值'},
+                                                {type : 'min', name: '最小值'}
+                                            ]
+                                        },
+                                        markLine : {
+                                            data : [
+                                                {type : 'average', name : '平均值'}
+                                            ]
+                                        }
+                                    }
+                                ]
+                            };
+
+
+                            // 为echarts对象加载数据
+                            myChart.setOption(option);
+                        },
+                        error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        },
+                        beforeSend: function (XMLHttpRequest) {
+                        },
+                        complete: function (XMLHttpRequest, textStatus) {
+                        }
+                    })
+                }
+
+            },
+            error: function (XMLHttpRequest, textStatus, errorThrown) {
+            },
+            beforeSend: function (XMLHttpRequest) {
+            },
+            complete: function (XMLHttpRequest, textStatus) {
+            }
+        })
+
+    }
+</script>
+</body>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ai.base.MonitorCofParaDAO">
+
+
+
+
+	<select id="queryMonitorCofParas" parameterType="pd"
+			resultType="pd">
+		SELECT T.MONITOR_CON_PARA_ID,
+		T.PARA_SERVICENAME,
+		T.PARA_SERVICETHRESHOLD,
+		T.PARA_NOTIFYMOBILENO,
+		T.PARA_NOTIFYMESSAGE,
+		T.PARA_EXPRESSION,
+		T.PARA_EXPIRE,
+		T.MONITOR_SCHEDULE,
+		T.DEAL_TIME,
+		T.SEND_MSG_VALID_TIME,
+		T.OPERATOR_SYMBOL,
+		T.PRE_COMPARE_SWITCH,
+		M.MAPITEM_KEY,
+		M.MAPITEM_VALUE,
+		M.MONITOR_MAPITEM_ID
+		FROM MONITOR_CON_PARA T,MONITOR_MAPITEM M
+		WHERE T.MONITOR_CON_PARA_ID = M.MONITOR_CON_PARA_ID
+		AND T.PARA_EXPIRE = '1'
+		order by T.MONITOR_CON_PARA_ID
+	</select>
+
+	<select id="queryDataCount" resultType="Double" parameterType="pd" >
+		<![CDATA[${MAPITEM_VALUE}]]>
+	</select>
+
+	<update id="updateMonitorCofParas" parameterType="pd" >
+		update MONITOR_CON_PARA
+
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="DEAL_TIME != null  ">
+				DEAL_TIME = DATE_FORMAT('${DEAL_TIME}','%Y-%m-%d %H:%i:%s.%f')
+			</if>
+		</trim>
+		<trim prefix="WHERE" prefixOverrides="AND ">
+			<if test="MONITOR_CON_PARA_ID != null ">
+				MONITOR_CON_PARA_ID = ${MONITOR_CON_PARA_ID}
+			</if>
+		</trim>
+	</update>
+
+
+	<select id="queryMonitorRecords" parameterType="pd"
+			resultType="pd">
+		SELECT
+		MONITOR_RECORD_ID,
+		MONITOR_SPLIT_TIME,
+		MONITOR_DATA_VALUE,
+		CREATE_TIME,
+		EXPIRE_FLAG,
+		UPDATE_TIME,
+		MONITOR_SCHEDULE_DATE,
+		DATA_RESULT,
+		MONITOR_CON_PARA_ID
+		FROM MONITOR_RECORD
+		<trim prefix="WHERE" prefixOverrides="AND ">
+			<if test="MONITOR_RECORD_ID != null ">
+			    AND MONITOR_RECORD_ID = ${MONITOR_RECORD_ID}
+			</if>
+			<if test="MONITOR_SPLIT_TIME != null and MONITOR_SPLIT_TIME != ''">
+				AND MONITOR_SPLIT_TIME = '${MONITOR_SPLIT_TIME}'
+			</if>
+			<if test="MONITOR_DATA_VALUE != null and MONITOR_DATA_VALUE != ''">
+				AND MONITOR_DATA_VALUE = '${MONITOR_DATA_VALUE}'
+			</if>
+			<if test="from != null and from !=''">
+				AND CREATE_TIME <![CDATA[>=]]>  str_to_date(#{from},'%Y-%m-%d %H:%i:%S')
+			</if>
+			<if test="to != null and to !=''">
+				AND CREATE_TIME <![CDATA[< ]]>  str_to_date(#{to},'%Y-%m-%d %H:%i:%S')
+			</if>
+			<if test="EXPIRE_FLAG != null and EXPIRE_FLAG != ''">
+				AND EXPIRE_FLAG = '${EXPIRE_FLAG}'
+			</if>
+			<if test="UPDATE_TIME != null ">
+				AND UPDATE_TIME = ${UPDATE_TIME}
+			</if>
+			<if test="MONITOR_SCHEDULE_DATE != null and MONITOR_SCHEDULE_DATE != ''">
+				AND MONITOR_SCHEDULE_DATE = '${MONITOR_SCHEDULE_DATE}'
+			</if>
+			<if test="MONITOR_CON_PARA_ID != null ">
+				AND MONITOR_CON_PARA_ID = ${MONITOR_CON_PARA_ID}
+			</if>
+		</trim>
+	</select>
+
+	<insert id="insertMonitorRecord" parameterType="pd"  >
+		insert into MONITOR_RECORD(
+		MONITOR_SPLIT_TIME,
+		MONITOR_DATA_VALUE,
+		CREATE_TIME,
+		EXPIRE_FLAG,
+		UPDATE_TIME,
+		MONITOR_SCHEDULE_DATE,
+		DATA_RESULT,
+		MONITOR_CON_PARA_ID)
+		values(
+		'${MONITOR_SPLIT_TIME}',
+		'${MONITOR_DATA_VALUE}',
+		DATE_FORMAT('${CREATE_TIME}','%Y-%m-%d %H:%i:%s.%f'),
+		'${EXPIRE_FLAG}',
+		DATE_FORMAT('${UPDATE_TIME}','%Y-%m-%d %H:%i:%s.%f'),
+		'${MONITOR_SCHEDULE_DATE}',
+		'${DATA_RESULT}',
+		${MONITOR_CON_PARA_ID}
+		)
+	</insert>
+
+	<update id="updateMonitorRecord" parameterType="pd" >
+		update MONITOR_RECORD
+
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="MONITOR_SPLIT_TIME != null and MONITOR_SPLIT_TIME != ''">
+				MONITOR_SPLIT_TIME = ${MONITOR_SPLIT_TIME},
+			</if>
+			<if test="MONITOR_DATA_VALUE != null ">
+				MONITOR_DATA_VALUE = ${MONITOR_DATA_VALUE},
+			</if>
+			<if test="EXPIRE_FLAG != null and EXPIRE_FLAG != ''">
+				EXPIRE_FLAG = ${EXPIRE_FLAG},
+			</if>
+			<if test="UPDATE_TIME != null ">
+				UPDATE_TIME = DATE_FORMAT('${UPDATE_TIME}','%Y-%m-%d %H:%i:%s.%f'),
+			</if>
+			<if test="MONITOR_SCHEDULE_DATE != null and MONITOR_SCHEDULE_DATE != ''">
+				MONITOR_SCHEDULE_DATE = ${MONITOR_SCHEDULE_DATE},
+			</if>
+			<if test="MONITOR_CON_PARA_ID != null ">
+				MONITOR_CON_PARA_ID = ${MONITOR_CON_PARA_ID},
+			</if>
+		</trim>
+		<trim prefix="WHERE" prefixOverrides="AND ">
+			<if test="MONITOR_RECORD_ID != null ">
+				MONITOR_RECORD_ID = ${MONITOR_RECORD_ID}
+			</if>
+		</trim>
+	</update>
+</mapper>

@@ -1,0 +1,230 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+    <title>慢SQL查询系统</title>
+    <script type="text/javascript" src="./vue.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="./iview.css">
+    <script type="text/javascript" src="./iview.min.js"></script>
+    <link rel="stylesheet" href="./jquery-ui.css">
+    <script src="./jquery-1.9.1.js"></script>
+    <script src="./jquery-ui.js"></script>
+    <link rel="stylesheet" href="./style.css">
+<style type="text/css">	
+
+</style>
+	
+</head>
+<body>
+
+<div id="app">
+
+     <Card style="width:98%">
+        <div style="text-align:center;font-size: 20px">
+            <h2>慢SQL查询系统</h2>
+        </div>
+         <div style="text-align: left; font-size: 10px;color : red;">注意：由于SQL过长导致页面性能降低，故进行了SQL长度截取，截取规则（仅保留2000）</div>
+         <div class="row">
+             <p><label for="from">从</label>
+                 <input type="text" id="from" name="from">
+                 <label for="to">到</label>
+                 <input type="text" id="to" name="to">
+
+                 <input type="hidden"  id="pageIndex" name="pageIndex">
+                 <input type="button" id="query" onclick="init();" style="margin-left: 200px;" value="查询">
+                 <input type="button" id="download2"  style="margin-left: 200px;" value="导出"></p>
+         </div>
+    </Card>
+    <Card style="width:98%">
+
+    	<i-table size="small" :columns="columns" :data="sqls"></i-table>
+	</Card>
+
+    <Card style="width:98%">
+        <input type="button" id="next" onclick="next();" style="float:right;margin-bottom:automargin-bottom: -;margin-bottom: -2;margin-top: -12px;" value="下一页">
+    </Card>
+
+</div>
+
+<script>
+    $(function() {
+        $( "#from" ).datepicker({
+            defaultDate: "-1w",
+            changeMonth: true,
+            numberOfMonths: 1,
+            dateFormat: 'yy-mm-dd',
+            onClose: function( selectedDate ) {
+                $( "#to" ).datepicker( "option", "minDate", selectedDate );
+            }
+        });
+
+        $( "#to" ).datepicker({
+            defaultDate: "-1w",
+            changeMonth: true,
+            numberOfMonths: 1,
+            dateFormat: 'yy-mm-dd',
+            onClose: function( selectedDate ) {
+                $( "#from" ).datepicker( "option", "maxDate", selectedDate );
+            }
+        });
+
+    });
+
+    var app = new Vue({
+        el: '#app',
+        data: {
+        	modal: false,
+        	delUserName: '',
+        	modal_loading: false,
+            orderNum: 0,
+        	inputValue: '',
+        	userNames: [],
+            columns: [
+                    {
+                        title: '编号',
+                        type: 'index',
+                        width: 100,
+                        align: 'center'
+                    },
+                    {
+                        title: '执行时间(分)',
+                        key: 'minute',
+                        width: 110
+                    },
+                    {
+                        title: '平均执行时间(秒)',
+                        key: 'query_time_avg',
+                        width: 100
+                    },
+                    {
+                        title: 'SQL类型',
+                        key: 'fingerprint'
+                    },
+                    {
+                        title: '样例SQL',
+                        key: 'sample'
+                    },
+                    {
+                        title: '主机（主机_实例端口）',
+                        key: 'hostname_max',
+                        width: 150
+                    },
+                    {
+                        title: '数据库名称',
+                        key: 'db_max',
+                        width: 150
+                    },
+                    {
+                        title: '执行次数',
+                        key: 'ts_cnt',
+                        width: 110
+                    }
+                ],
+            sqls: [
+                     
+            ]
+        }
+    })
+
+
+
+    
+    function init(){
+        var fromval = $( "#from" ).val();
+        var toval = $( "#to" ).val();
+
+        $.ajax({
+ 			url:"/sql/getSlowSQL",
+ 			type:"post",
+            data: {
+                from: fromval,
+                to: toval,
+                pageIndex :1
+            },
+ 			dataType:"json",
+ 			success:function(response){
+ 		        app.$data.sqls=response.res;
+                $("#pageIndex").val(response.pageIndex);
+                $( "#from" ).val(response.from);
+                $( "#to" ).val(response.to);
+               //alert(response.res);
+                //alert(response.pageIndex);
+ 			},
+ 			error: function(XMLHttpRequest, textStatus, errorThrown){					
+ 			},
+ 			beforeSend:function(XMLHttpRequest){
+	        },
+	       	complete:function(XMLHttpRequest,textStatus){
+	       	}
+        })
+    }
+
+
+    function next(){
+        var fromval = $( "#from" ).val();
+        var toval = $( "#to" ).val();
+        var pageIndex = $("#pageIndex").val();
+        if(pageIndex==null&&pageIndex==""){
+            pageIndex = 1;
+        }
+        var toPageIndex = parseInt(pageIndex)+1;
+        $.ajax({
+            url:"/sql/getSlowSQL",
+            type:"post",
+            data: {
+                from: fromval,
+                to: toval,
+                pageIndex :toPageIndex
+            },
+            dataType:"json",
+            success:function(response){
+                app.$data.sqls=response.res;
+                $("#pageIndex").val(response.pageIndex);
+                $( "#from" ).val(response.from);
+                $( "#to" ).val(response.to);
+                $('html,body').animate({scrollTop:0},'slow');
+                //alert(response.res);
+                //alert(response.pageIndex);
+            },
+            error: function(XMLHttpRequest, textStatus, errorThrown){
+            },
+            beforeSend:function(XMLHttpRequest){
+            },
+            complete:function(XMLHttpRequest,textStatus){
+            }
+        })
+    }
+    init();
+
+
+
+
+
+    $('#download2').click(function(){
+        var fromval = $( "#from" ).val();
+        var toval = $( "#to" ).val();
+             var url = '/sql/download';
+             var form=$("<form>");//定义一个form表单
+             form.attr("style","display:none");
+             form.attr("target","");
+             form.attr("method","post");//请求类型
+             form.attr("action",url);//请求地址
+             $("body").append(form);//将表单放置在web中
+
+             var input1=$("<input>");
+             input1.attr("type","hidden");
+             input1.attr("name","from");
+            input1.attr("value",fromval);
+            form.append(input1);
+              var input2=$("<input>");
+             input2.attr("type","hidden");
+             input2.attr("name","to");
+             input2.attr("value",toval);
+             form.append(input2);
+             form.submit();//表单提交
+         });
+  </script>
+</body>
+</html>
+

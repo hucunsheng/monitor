@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ai.base.MySqlPullDao">
+
+	<select id="getSlowSQL" parameterType="pd"
+		resultType="pd">
+		SELECT substring(ts_min,1,16) AS `minute`,
+		SUM(Query_time_sum) / SUM(ts_cnt) AS `query_time_avg`,
+		fact.fingerprint AS fingerprint,
+		fact.sample AS sample,
+		MAX(hostname_max) AS `hostname_max`,
+		MAX(db_max) AS `db_max`,
+		SUM(ts_cnt) AS `ts_cnt`
+		FROM `global_query_review` AS `fact`
+		JOIN `global_query_review_history` AS `dimension` USING (`checksum`)
+		<where>
+		<if test="from != null and from != ''">
+				AND dimension.ts_min <![CDATA[>=]]>  str_to_date(#{from},'%Y-%m-%d %H:%i:%S')
+		</if>
+		<if test="to != null and to != ''">
+				AND dimension.ts_min <![CDATA[<]]>  str_to_date(#{to},'%Y-%m-%d %H:%i:%S')
+		</if>
+
+			GROUP BY checksum
+			ORDER BY Query_time_sum DESC
+			limit #{pageIndex},#{pageSize}
+		</where>
+	</select>
+
+</mapper>

@@ -4,10 +4,10 @@
     <appender name="INFO_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <!--日志文件输出的地址-->
         <!--/Users/hucunsheng    /Users/hucunsheng-->
-        <File>/Users/hucunsheng/logs/mysqlPull.log</File>
+        <File>/root/logs/monitor/mysqlPull.log</File>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!--日志文件输出的文件名-->
-            <fileNamePattern>/Users/hucunsheng/logs/mysqlPull.log-%d{yyyyMMdd}.log.%i</fileNamePattern>
+            <fileNamePattern>/root/logs/monitor/mysqlPull.log-%d{yyyyMMdd}.log.%i</fileNamePattern>
             <!--日志文件最大的大小-->
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>300MB</maxFileSize>
@@ -25,10 +25,10 @@
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>ERROR</level>
         </filter>
-        <File>/Users/hucunsheng/logs/error.log</File>
+        <File>/root/logs/monitor/error.log</File>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <!--日志文件输出的文件名-->
-            <fileNamePattern>/Users/hucunsheng/logs/error-%d{yyyyMMdd}.log.%i
+            <fileNamePattern>/root/logs/monitor/error-%d{yyyyMMdd}.log.%i
             </fileNamePattern>
             <!--日志文件最大的大小-->
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">

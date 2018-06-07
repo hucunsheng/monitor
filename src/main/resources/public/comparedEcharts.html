@@ -2,7 +2,7 @@
 <head>
     <meta charset="utf-8">
     <title>ECharts</title>
-    <script src="./echarts.js"></script>
+    <script src="js/echarts.min.js"></script>
 
     <script type="text/javascript" src="./vue.min.js"></script>
     <link rel="stylesheet" type="text/css" href="./iview.css">
@@ -11,19 +11,40 @@
     <script src="./jquery-1.9.1.js"></script>
     <script src="./jquery-ui.js"></script>
 
- <!--日期时间控件-->
 
-    <link href="jQuery-Timepicker-Addon/jquery-ui-timepicker-addon.css" type="text/css" />
-    <link href="jQuery-Timepicker-Addon/demos.css" rel="stylesheet" type="text/css" />
-
-    <script src="jQuery-Timepicker-Addon/jquery-ui-timepicker-addon.js" type="text/javascript"></script>
-
-    <!--中文-->
-    <script src="js/jquery.ui.datepicker-zh-CN.js.js" type="text/javascript" charset="gb2312"></script>
-    <script src="js/jquery-ui-timepicker-zh-CN.js" type="text/javascript"></script>
+    <script src="js/mobiscroll_002.js" type="text/javascript"></script>
+    <script src="js/mobiscroll_004.js" type="text/javascript"></script>
+    <link href="css/mobiscroll_002.css" rel="stylesheet" type="text/css">
+    <link href="css/mobiscroll.css" rel="stylesheet" type="text/css">
+    <script src="js/mobiscroll.js" type="text/javascript"></script>
+    <script src="js/mobiscroll_003.js" type="text/javascript"></script>
+    <script src="js/mobiscroll_005.js" type="text/javascript"></script>
+    <link href="css/mobiscroll_003.css" rel="stylesheet" type="text/css">
 
 
 </head>
+
+<style type="text/css">
+    body {
+        padding: 0;
+        margin: 0;
+        font-family: arial, verdana, sans-serif;
+        font-size: 12px;
+        background: #ddd;
+    }
+    input, select {
+        width: 11%;
+        padding: 5px;
+        margin: 5px 0;
+        border: 1px solid #aaa;
+        box-sizing: border-box;
+        border-radius: 5px;
+        -moz-box-sizing: border-box;
+        -webkit-box-sizing: border-box;
+        -webkit-border-radius: 5px;
+    }
+
+</style>
 <body>
 <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
 <div id="app">
@@ -49,12 +70,12 @@
     <label for="to1">到</label>
     <input type="text" id="to1" name="to1">
 
+    <input type="button" id="query" onclick="init();"  value="查询">
 </div>
     <!--<span>Selected: {{ couponSelected }}</span>-->
 
 
 
-            <input type="button" id="query" onclick="init();" style="margin-left: 200px;width:100px;height: 20px;" value="查询">
 <div id="main" style="height:400px"></div>
 <!-- ECharts单文件引入 -->
 
@@ -87,51 +108,28 @@
 
 
     $(function() {
-
-
-        $( "#from" ).datetimepicker({
-            defaultDate: "-1w",
-            changeMonth: true,
-            numberOfMonths: 1,
+        var currYear = (new Date()).getFullYear();
+        var opt={};
+        opt.date = {preset : 'date'};
+        opt.datetime = {preset : 'datetime'};
+        opt.time = {preset : 'time'};
+        opt.default = {
+            theme: 'android-ics light', //皮肤样式
+            display: 'modal', //显示方式
+            mode: 'scroller', //日期选择模式
             dateFormat: 'yy-mm-dd',
-            timeFormat: 'HH:mm:ss',
-//            onClose: function( selectedDate ) {
-//                $( "#to" ).datetimepicker( "option", "minDate", selectedDate );
-//            }
-        });
+            lang: 'zh',
+            showNow: true,
+            nowText: "今天",
+            startYear: currYear - 30, //开始年份
+            endYear: currYear + 30 //结束年份
+        };
 
-        $( "#to" ).datetimepicker({
-            defaultDate: "-1w",
-            changeMonth: true,
-            numberOfMonths: 1,
-            dateFormat: 'yy-mm-dd',
-            timeFormat: 'HH:mm:ss',
-//            onClose: function( selectedDate ) {
-//                $( "#from" ).datetimepicker( "option", "maxDate", selectedDate );
-//            }
-        });
-
-        $( "#from1" ).datetimepicker({
-            defaultDate: "-1w",
-            changeMonth: true,
-            numberOfMonths: 1,
-            dateFormat: 'yy-mm-dd',
-            timeFormat: "HH:mm:ss",
-//            onClose: function( selectedDate ) {
-//                $( "#to1" ).datetimepicker( "option", "minDate", selectedDate );
-//            }
-        });
-
-        $( "#to1" ).datetimepicker({
-            defaultDate: "-1w",
-            changeMonth: true,
-            numberOfMonths: 1,
-            dateFormat: 'yy-mm-dd',
-            timeFormat: 'HH:mm:ss',
-//            onClose: function( selectedDate ) {
-//                $( "#from1" ).datetimepicker( "option", "maxDate", selectedDate );
-//            }
-        });
+        var optDateTime = $.extend(opt['datetime'], opt['default']);
+        $("#from").mobiscroll(optDateTime).datetime(optDateTime);
+        $("#to").mobiscroll(optDateTime).datetime(optDateTime);
+        $("#from1").mobiscroll(optDateTime).datetime(optDateTime);
+        $("#to1").mobiscroll(optDateTime).datetime(optDateTime);
         $.ajax({
             url:"/monitor/getMonitors",
             type:"get",

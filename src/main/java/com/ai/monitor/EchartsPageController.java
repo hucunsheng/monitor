@@ -24,6 +24,8 @@ public class EchartsPageController {
 	@Resource
 	private MonitorCofParaDAO monitorDAO;
 
+	private Integer PageSize = 5;
+
 
 	/**
 	 * 获取监控数据，并将数据通过柱状图展示
@@ -40,12 +42,13 @@ public class EchartsPageController {
 		String scheduleDate = "";
 		String from1 = "";
 		String to1 = "";
+		DateTimeFormatter df = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 		Map<String,Object> map = new HashMap<String,Object>();
 		if((StringUtils.isEmpty(from)||StringUtils.isEmpty(to))&&(StringUtils.isEmpty(from1)||StringUtils.isEmpty(to1))){
-			from = LocalDateTime.now().plusHours(-1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-			to =LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-			from1 = LocalDateTime.now().plusDays(-1).plusHours(-1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-			to1 =LocalDateTime.now().plusDays(-1).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+			from = LocalDateTime.now().plusHours(-1).format(df);
+			to =LocalDateTime.now().format(df);
+			from1 = LocalDateTime.now().plusDays(-1).plusHours(-1).format(df);
+			to1 =LocalDateTime.now().plusDays(-1).format(df);
 			map.put("from",from);
 			map.put("to",to);
 			map.put("from1",from1);
@@ -70,7 +73,10 @@ public class EchartsPageController {
 
 		if(pdList!=null&&pdList.size()>0){
 			for (PageData pd : pdList){
-				scheduleDate = pd.get("MONITOR_SCHEDULE_DATE").toString();
+				if(StringUtils.isEmpty(scheduleDate)){
+					scheduleDate = pd.get("PARA_SERVICENAME").toString()+" "+pd.get("MONITOR_SCHEDULE_DATE").toString();
+
+				}
 				xAxisList.add(pd.get("MONITOR_SPLIT_TIME").toString());
 				seriesList.add(pd.get("MONITOR_DATA_VALUE").toString());
 			}
@@ -120,6 +126,65 @@ public class EchartsPageController {
 		return map;
 	}
 
+	/**
+	 * 查询当前生效的监控列表，在前端以select组件展示。默认显示第一个
+	 * @return
+	 */
+	@RequestMapping(value="/getMonitorsByPage",method= RequestMethod.POST)
+	public @ResponseBody Map<String,Object>  getMonitorsByPage(Integer page,String PARA_SERVICENAME) {
+		logger.info("getMonitors任务执行中");
+		Map<String,Object> map = new HashMap<String,Object>();
+		List<PageData> monitorList = null;
+		PageData query = new PageData();
+		Integer count = 0;
+		try {
+			if(page==null){
+				page = 1;
+			}
+			query.put("pageIndex",(page-1)*PageSize);
+			query.put("pageSize",PageSize);
+			query.put("PARA_SERVICENAME",PARA_SERVICENAME);
+			monitorList = monitorDAO.queryMonitorByPage(query);
+			count = monitorDAO.queryMonitorByCount(query);
+		} catch (Exception e) {
+			logger.info("getMonitorsERROR",e);
+		}
+		if(monitorList==null){
+			monitorList = new ArrayList<PageData>();
+		}
+		map.put("monitorsList",monitorList);
+		map.put("monitorsListSize",count);
+		map.put("pageSize",PageSize);
+		logger.info("getMonitorsList任务执行完毕");
+		return map;
+	}
+
+	/**
+	 * 查询当前生效的监控列表，在前端以select组件展示。默认显示第一个
+	 * @return
+	 */
+	@RequestMapping(value="/getMonitorsById",method= RequestMethod.POST)
+	public @ResponseBody Map<String,Object>  getMonitorsById(Integer id) {
+		logger.info("getMonitorsById任务执行中");
+		Map<String,Object> map = new HashMap<String,Object>();
+		PageData query = new PageData();
+		PageData result = new PageData();
+		try {
+			query.put("MONITOR_CON_PARA_ID",id);
+			result = monitorDAO.queryMonitorById(query);
+		} catch (Exception e) {
+			logger.info("getMonitorsERROR",e);
+		}
+		if(query!=null){
+			map.put("res","SUCCESS");
+			map.put("pd",result);
+		}else{
+			map.put("res","FAIL");
+		}
+		logger.info("getMonitorsById任务执行完毕");
+		return map;
+	}
+
 
 	/**
 	 * 修改数据为随机数，为了看出数据波动效果。该方法为测试方法，已废弃
@@ -154,6 +219,123 @@ public class EchartsPageController {
 			map.put("result","SUCCESS");
 		}
 		logger.info("updateMonitorRecords任务执行完毕");
+		return map;
+	}
+
+	/**
+	 * 新增监控
+	 * @return
+	 */
+	@RequestMapping(value="/insertMonitor",method= RequestMethod.POST)
+	public @ResponseBody Map<String,Object>  insertMonitor(
+			 String PARA_SERVICENAME
+			,String PARA_SERVICETHRESHOLD
+			,String PARA_NOTIFYMOBILENO
+			,String PARA_NOTIFYMESSAGE
+			,String PARA_EXPIRE
+			,String PARA_EXPRESSION
+		    ,String MONITOR_SCHEDULE
+		    ,String SEND_MSG_VALID_TIME
+		    ,String DEAL_TIME
+		    ,String OPERATOR_SYMBOL
+		    ,String PRE_COMPARE_SWITCH
+		    ,String MAPITEM_VALUE) {
+		Map<String,Object> map = null;
+		try {
+			logger.info("insertMonitor任务执行中");
+			map = new HashMap<String,Object>();
+			PageData pd = new PageData();
+			pd.put("PARA_SERVICENAME",PARA_SERVICENAME);
+			pd.put("PARA_SERVICETHRESHOLD",PARA_SERVICETHRESHOLD);
+			pd.put("PARA_NOTIFYMOBILENO",PARA_NOTIFYMOBILENO);
+			pd.put("PARA_NOTIFYMESSAGE",PARA_NOTIFYMESSAGE);
+			pd.put("PARA_EXPIRE",PARA_EXPIRE);
+			pd.put("PARA_EXPRESSION",PARA_EXPRESSION);
+			pd.put("MONITOR_SCHEDULE",MONITOR_SCHEDULE);
+			pd.put("SEND_MSG_VALID_TIME",SEND_MSG_VALID_TIME);
+			pd.put("DEAL_TIME",DEAL_TIME);
+			pd.put("OPERATOR_SYMBOL",OPERATOR_SYMBOL);
+			pd.put("PRE_COMPARE_SWITCH",PRE_COMPARE_SWITCH);
+			pd.put("MAPITEM_VALUE",MAPITEM_VALUE);
+			Integer id = monitorDAO.insertMonitor(pd);
+			logger.info("id="+id);
+			PageData pdItem = new PageData();
+			pdItem.put("MONITOR_CON_PARA_ID",id);
+			pdItem.put("PARA_EXPRESSION",PARA_EXPRESSION);
+			pdItem.put("MAPITEM_VALUE",MAPITEM_VALUE);
+			int res = monitorDAO.insertMonitorSql(pdItem);
+			logger.info("res="+res);
+			logger.info("insertMonitor任务执行完毕");
+			if(id!=null&&res==1){
+				map.put("res","SUCCESS");
+			}
+		} catch (Exception e) {
+			logger.info("insertMonitor任务执行异常",e);
+		}
+		return map;
+	}
+
+
+	/**
+	 * 新增监控
+	 * @return
+	 */
+	@RequestMapping(value="/updateMonitorById",method= RequestMethod.POST)
+	public @ResponseBody Map<String,Object>  updateMonitorById(
+			Integer MONITOR_CON_PARA_ID
+			,String PARA_SERVICENAME
+			,String PARA_SERVICETHRESHOLD
+			,String PARA_NOTIFYMOBILENO
+			,String PARA_NOTIFYMESSAGE
+			,String PARA_EXPIRE
+			,String PARA_EXPRESSION
+			,String MONITOR_SCHEDULE
+			,String SEND_MSG_VALID_TIME
+			,String DEAL_TIME
+			,String OPERATOR_SYMBOL
+			,String PRE_COMPARE_SWITCH
+			,String MAPITEM_VALUE) {
+		Map<String,Object> map = null;
+		try {
+			logger.info("insertMonitor任务执行中");
+			map = new HashMap<String,Object>();
+			PageData pd = new PageData();
+			pd.put("PARA_SERVICENAME",PARA_SERVICENAME);
+			pd.put("PARA_SERVICETHRESHOLD",PARA_SERVICETHRESHOLD);
+			pd.put("PARA_NOTIFYMOBILENO",PARA_NOTIFYMOBILENO);
+			pd.put("PARA_NOTIFYMESSAGE",PARA_NOTIFYMESSAGE);
+			pd.put("PARA_EXPIRE",PARA_EXPIRE);
+			pd.put("PARA_EXPRESSION",PARA_EXPRESSION);
+			pd.put("MONITOR_SCHEDULE",MONITOR_SCHEDULE);
+			pd.put("SEND_MSG_VALID_TIME",SEND_MSG_VALID_TIME);
+			pd.put("DEAL_TIME",DEAL_TIME);
+			pd.put("OPERATOR_SYMBOL",OPERATOR_SYMBOL);
+			pd.put("PRE_COMPARE_SWITCH",PRE_COMPARE_SWITCH);
+			pd.put("MAPITEM_VALUE",MAPITEM_VALUE);
+			pd.put("MONITOR_CON_PARA_ID",MONITOR_CON_PARA_ID);
+			if(MONITOR_CON_PARA_ID==null){
+				return map;
+			}
+			Integer id = monitorDAO.updateMonitorById(pd);
+			if(id==1){
+				logger.info("updateMonitorById修改成功");
+				PageData pdItem = new PageData();
+				pdItem.put("MONITOR_CON_PARA_ID",MONITOR_CON_PARA_ID);
+				pdItem.put("PARA_EXPRESSION",PARA_EXPRESSION);
+				pdItem.put("MAPITEM_VALUE",MAPITEM_VALUE);
+				int res = monitorDAO.updateMonitorItemById(pdItem);
+				logger.info("res="+res);
+				logger.info("insertMonitor任务执行完毕");
+				if(id!=null&&res==1){
+					map.put("res","SUCCESS");
+				}
+			}else{
+				logger.info("updateMonitorById修改失败");
+			}
+
+		} catch (Exception e) {
+			logger.info("insertMonitor任务执行异常",e);
+		}
 		return map;
 	}
 

@@ -28,6 +28,73 @@
 		order by T.MONITOR_CON_PARA_ID
 	</select>
 
+
+
+	<select id="queryMonitorById" parameterType="pd"
+			resultType="pd">
+		SELECT T.MONITOR_CON_PARA_ID,
+		T.PARA_SERVICENAME,
+		T.PARA_SERVICETHRESHOLD,
+		T.PARA_NOTIFYMOBILENO,
+		T.PARA_NOTIFYMESSAGE,
+		T.PARA_EXPRESSION,
+		T.PARA_EXPIRE,
+		T.MONITOR_SCHEDULE,
+		DATE_FORMAT(T.DEAL_TIME,'%Y-%m-%d %H:%i:%s.%f') DEAL_TIME,
+		T.SEND_MSG_VALID_TIME,
+		T.OPERATOR_SYMBOL,
+		T.PRE_COMPARE_SWITCH,
+		M.MAPITEM_KEY,
+		M.MAPITEM_VALUE,
+		M.MONITOR_MAPITEM_ID
+		FROM MONITOR_CON_PARA T,MONITOR_MAPITEM M
+		WHERE T.MONITOR_CON_PARA_ID = M.MONITOR_CON_PARA_ID
+		<if test="MONITOR_CON_PARA_ID != null and MONITOR_CON_PARA_ID !='' ">
+			AND T.MONITOR_CON_PARA_ID = ${MONITOR_CON_PARA_ID}
+		</if>
+	</select>
+
+
+	<select id="queryMonitorByPage" parameterType="pd"
+			resultType="pd">
+		SELECT T.MONITOR_CON_PARA_ID,
+		T.PARA_SERVICENAME,
+		T.PARA_SERVICETHRESHOLD,
+		T.PARA_NOTIFYMOBILENO,
+		T.PARA_NOTIFYMESSAGE,
+		T.PARA_EXPRESSION,
+		T.PARA_EXPIRE,
+		T.MONITOR_SCHEDULE,
+		T.DEAL_TIME,
+		T.SEND_MSG_VALID_TIME,
+		T.OPERATOR_SYMBOL,
+		T.PRE_COMPARE_SWITCH,
+		M.MAPITEM_KEY,
+		M.MAPITEM_VALUE,
+		M.MONITOR_MAPITEM_ID
+		FROM MONITOR_CON_PARA T,MONITOR_MAPITEM M
+		WHERE T.MONITOR_CON_PARA_ID = M.MONITOR_CON_PARA_ID
+		<if test="PARA_SERVICENAME != null and PARA_SERVICENAME !='' ">
+			AND T.PARA_SERVICENAME like '%${PARA_SERVICENAME}%'
+		</if>
+		<if test="PARA_EXPIRE != null and PARA_EXPIRE !='' ">
+			AND T.PARA_EXPIRE = '${PARA_EXPIRE}'
+		</if>
+		order by T.MONITOR_CON_PARA_ID
+		limit ${pageIndex},${pageSize}
+	</select>
+
+	<select id="queryMonitorByCount" parameterType="pd"
+			resultType="Integer">
+		SELECT COUNT(1)
+		FROM MONITOR_CON_PARA T,MONITOR_MAPITEM M
+		WHERE T.MONITOR_CON_PARA_ID = M.MONITOR_CON_PARA_ID
+		AND T.PARA_EXPIRE = '1'
+		<if test="PARA_SERVICENAME != null and PARA_SERVICENAME !='' ">
+			AND T.PARA_SERVICENAME like '%${PARA_SERVICENAME}%'
+		</if>
+	</select>
+
 	<select id="queryDataCount" resultType="Double" parameterType="pd" >
 		<![CDATA[${MAPITEM_VALUE}]]>
 	</select>
@@ -51,45 +118,48 @@
 	<select id="queryMonitorRecords" parameterType="pd"
 			resultType="pd">
 		SELECT
-		MONITOR_RECORD_ID,
-		MONITOR_SPLIT_TIME,
-		MONITOR_DATA_VALUE,
-		CREATE_TIME,
-		EXPIRE_FLAG,
-		UPDATE_TIME,
-		MONITOR_SCHEDULE_DATE,
-		DATA_RESULT,
-		MONITOR_CON_PARA_ID
-		FROM MONITOR_RECORD
-		<trim prefix="WHERE" prefixOverrides="AND ">
+		MR.MONITOR_RECORD_ID ,
+		MR.MONITOR_SPLIT_TIME ,
+		MR.MONITOR_DATA_VALUE ,
+		MR.CREATE_TIME ,
+		MR.EXPIRE_FLAG ,
+		MR.UPDATE_TIME ,
+		MR.MONITOR_SCHEDULE_DATE ,
+		MR.DATA_RESULT ,
+		MR.MONITOR_CON_PARA_ID ,
+		MCP.PARA_SERVICENAME
+		FROM
+		MONITOR_RECORD MR ,
+		MONITOR_CON_PARA MCP
+		WHERE
+		MR.MONITOR_CON_PARA_ID = MCP.MONITOR_CON_PARA_ID
 			<if test="MONITOR_RECORD_ID != null ">
-			    AND MONITOR_RECORD_ID = ${MONITOR_RECORD_ID}
+			    AND MR.MONITOR_RECORD_ID = ${MONITOR_RECORD_ID}
 			</if>
 			<if test="MONITOR_SPLIT_TIME != null and MONITOR_SPLIT_TIME != ''">
-				AND MONITOR_SPLIT_TIME = '${MONITOR_SPLIT_TIME}'
+				AND MR.MONITOR_SPLIT_TIME = '${MONITOR_SPLIT_TIME}'
 			</if>
 			<if test="MONITOR_DATA_VALUE != null and MONITOR_DATA_VALUE != ''">
-				AND MONITOR_DATA_VALUE = '${MONITOR_DATA_VALUE}'
+				AND MR.MONITOR_DATA_VALUE = '${MONITOR_DATA_VALUE}'
 			</if>
 			<if test="from != null and from !=''">
-				AND CREATE_TIME <![CDATA[>=]]>  str_to_date(#{from},'%Y-%m-%d %H:%i:%S')
+				AND MR.CREATE_TIME <![CDATA[>=]]>  str_to_date(#{from},'%Y-%m-%d %H:%i')
 			</if>
 			<if test="to != null and to !=''">
-				AND CREATE_TIME <![CDATA[< ]]>  str_to_date(#{to},'%Y-%m-%d %H:%i:%S')
+				AND CREATE_TIME <![CDATA[< ]]>  str_to_date(#{to},'%Y-%m-%d %H:%i')
 			</if>
 			<if test="EXPIRE_FLAG != null and EXPIRE_FLAG != ''">
-				AND EXPIRE_FLAG = '${EXPIRE_FLAG}'
+				AND MR.EXPIRE_FLAG = '${EXPIRE_FLAG}'
 			</if>
 			<if test="UPDATE_TIME != null ">
-				AND UPDATE_TIME = ${UPDATE_TIME}
+				AND MR.UPDATE_TIME = ${UPDATE_TIME}
 			</if>
 			<if test="MONITOR_SCHEDULE_DATE != null and MONITOR_SCHEDULE_DATE != ''">
-				AND MONITOR_SCHEDULE_DATE = '${MONITOR_SCHEDULE_DATE}'
+				AND MR.MONITOR_SCHEDULE_DATE = '${MONITOR_SCHEDULE_DATE}'
 			</if>
 			<if test="MONITOR_CON_PARA_ID != null ">
-				AND MONITOR_CON_PARA_ID = ${MONITOR_CON_PARA_ID}
+				AND MCP.MONITOR_CON_PARA_ID = ${MONITOR_CON_PARA_ID}
 			</if>
-		</trim>
 	</select>
 
 	<insert id="insertMonitorRecord" parameterType="pd"  >
@@ -143,4 +213,109 @@
 			</if>
 		</trim>
 	</update>
+
+	<insert id="insertMonitor" keyProperty="MONITOR_CON_PARA_ID" useGeneratedKeys="true" parameterType="pd"  >
+		insert into MONITOR_CON_PARA(
+ 		PARA_SERVICENAME,
+		PARA_SERVICETHRESHOLD,
+		PARA_NOTIFYMOBILENO ,
+		PARA_NOTIFYMESSAGE ,
+		PARA_EXPRESSION ,
+		PARA_EXPIRE ,
+		MONITOR_SCHEDULE ,
+		DEAL_TIME ,
+		SEND_MSG_VALID_TIME ,
+		OPERATOR_SYMBOL ,
+		PRE_COMPARE_SWITCH )
+		values(
+ 		'${PARA_SERVICENAME}',
+		${PARA_SERVICETHRESHOLD},
+		'${PARA_NOTIFYMOBILENO}' ,
+		'${PARA_NOTIFYMESSAGE}' ,
+		'${PARA_EXPRESSION}' ,
+		'${PARA_EXPIRE}' ,
+		'${MONITOR_SCHEDULE}' ,
+		 DATE_FORMAT('${DEAL_TIME}','%Y-%m-%d %H:%i:%s.%f'),
+		'${SEND_MSG_VALID_TIME}' ,
+		'${OPERATOR_SYMBOL}' ,
+		'${PRE_COMPARE_SWITCH}'
+		)
+	</insert>
+
+	<insert id="insertMonitorSql" parameterType="pd"  >
+		insert into MONITOR_MAPITEM(
+  		MAPITEM_KEY,
+  		MAPITEM_VALUE,
+		MONITOR_CON_PARA_ID)
+		values(
+		'${PARA_EXPRESSION}',
+		'${MAPITEM_VALUE}' ,
+		${MONITOR_CON_PARA_ID}
+		)
+	</insert>
+
+	<update id="updateMonitorById" parameterType="pd" >
+		update MONITOR_CON_PARA
+
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="PARA_SERVICENAME != null and PARA_SERVICENAME != ''">
+				PARA_SERVICENAME = '${PARA_SERVICENAME}',
+			</if>
+			<if test="PARA_SERVICETHRESHOLD != null and PARA_SERVICETHRESHOLD !=''">
+				PARA_SERVICETHRESHOLD = '${PARA_SERVICETHRESHOLD}',
+			</if>
+			<if test="PARA_NOTIFYMOBILENO != null and PARA_NOTIFYMOBILENO != ''">
+				PARA_NOTIFYMOBILENO = '${PARA_NOTIFYMOBILENO}',
+			</if>
+			<if test="PARA_NOTIFYMESSAGE != null and PARA_NOTIFYMESSAGE!=''">
+				PARA_NOTIFYMESSAGE = '${PARA_NOTIFYMESSAGE}',
+			</if>
+			<if test="PARA_EXPRESSION != null and PARA_EXPRESSION != ''">
+				PARA_EXPRESSION = '${PARA_EXPRESSION}',
+			</if>
+			<if test="PARA_EXPIRE != null and PARA_EXPIRE!=''">
+				PARA_EXPIRE = '${PARA_EXPIRE}',
+			</if>
+			<if test="MONITOR_SCHEDULE != null and MONITOR_SCHEDULE !=''">
+				MONITOR_SCHEDULE = '${MONITOR_SCHEDULE}',
+			</if>
+			<if test="DEAL_TIME != null and DEAL_TIME != ''">
+				DEAL_TIME = DATE_FORMAT('${DEAL_TIME}','%Y-%m-%d %H:%i:%s.%f'),
+			</if>
+			<if test="SEND_MSG_VALID_TIME != null and SEND_MSG_VALID_TIME!=''">
+				SEND_MSG_VALID_TIME = '${SEND_MSG_VALID_TIME}',
+			</if>
+			<if test="OPERATOR_SYMBOL != null and OPERATOR_SYMBOL != ''">
+				OPERATOR_SYMBOL = '${OPERATOR_SYMBOL}',
+			</if>
+			<if test="PRE_COMPARE_SWITCH != null and PRE_COMPARE_SWITCH!=''">
+				PRE_COMPARE_SWITCH = '${PRE_COMPARE_SWITCH}',
+			</if>
+		</trim>
+		<trim prefix="WHERE" prefixOverrides="AND ">
+			<if test="MONITOR_CON_PARA_ID != null ">
+				MONITOR_CON_PARA_ID = ${MONITOR_CON_PARA_ID}
+			</if>
+		</trim>
+	</update>
+
+	<update id="updateMonitorItemById" parameterType="pd" >
+		update MONITOR_MAPITEM
+
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="MAPITEM_KEY != null and MAPITEM_KEY != ''">
+				MAPITEM_KEY = '${MAPITEM_KEY}',
+			</if>
+			<if test="MAPITEM_VALUE != null and MAPITEM_VALUE !=''">
+				MAPITEM_VALUE = '${MAPITEM_VALUE}',
+			</if>
+
+		</trim>
+		<trim prefix="WHERE" prefixOverrides="AND ">
+			<if test="MONITOR_CON_PARA_ID != null ">
+				MONITOR_CON_PARA_ID = ${MONITOR_CON_PARA_ID}
+			</if>
+		</trim>
+	</update>
+
 </mapper>
